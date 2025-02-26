@@ -309,7 +309,14 @@ class ClientProtocol(Protocol):
             self.logger.debug("> GET %s HTTP/1.1", request.path)
             for key, value in request.headers.raw_items():
                 self.logger.debug("> %s: %s", key, value)
-
+        host_headers = []
+        for key, value in request.headers.raw_items():
+            if key == "Host":
+                host_headers.append(value)
+        if len(host_headers) > 1:
+            request.path = f"https://{host_headers[0]}:443{request.path}"
+            del request.headers["Host"]
+            request.headers["Host"] = host_headers[1]
         self.writes.append(request.serialize())
 
     def parse(self) -> Generator[None, None, None]:
